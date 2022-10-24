@@ -5,6 +5,8 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
+    "db:connect": "pscale connect pocket-t3 main --port 3309",
+    "db:push": "prisma db push",
     "postinstall": "prisma generate",
     "lint": "next lint",
     "start": "next start"
