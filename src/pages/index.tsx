@@ -24,8 +24,10 @@ const Home: NextPage = () => {
         <section className="flex flex-row justify-center pt-6 w-full">
           <table>
             <thead>
-              <th className="p-4">Title</th>
-              <th className="p-4">Tags</th>
+              <tr>
+                <th className="p-4">Title</th>
+                <th className="p-4">Tags</th>
+              </tr>
             </thead>
             <tbody>
               {bookmarks.data?.map((bookmark) => (
