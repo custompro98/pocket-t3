@@ -1,19 +1,39 @@
 import type { NextPage } from "next";
 import Head from "next/head";
+import { useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { type AppRouterTypes, trpc } from "../utils/trpc";
-import { useState } from "react";
+
+type InputName = "title" | "url";
 
 const Home: NextPage = () => {
   const { data: sessionData } = useSession();
 
+  const createBookmark = trpc.bookmark.create.useMutation();
+
   const [title, setTitle] = useState<string | undefined>(undefined);
   const [url, setUrl] = useState<string | undefined>(undefined);
+
+  const handleChange = (field: InputName): React.ChangeEventHandler<HTMLInputElement> => (e) => {
+    const set = field === 'title' ? setTitle : setUrl;
+
+    set(e.currentTarget.value);
+  };
 
   const handleSubmit: React.MouseEventHandler<HTMLInputElement> = (event) => {
     event.preventDefault();
 
-    console.log("clicked!");
+    if (title === undefined || url === undefined) {
+      return;
+    }
+
+    createBookmark.mutate({
+      title,
+      url,
+    });
+
+    setTitle(undefined);
+    setUrl(undefined);
   };
 
   const bookmarks = trpc.bookmark.list.useQuery();
@@ -31,28 +51,40 @@ const Home: NextPage = () => {
             {sessionData ? "Sign out" : "Sign in"}
           </Button>
         </header>
-        <section className="flex flex-col pt-32 w-full min-h-screen">
-          <h2 className="pb-4 text-3xl">Bookmarks</h2>
-          {bookmarks.data &&
-            bookmarks.data.map((bookmark, idx) => (
-              <BookmarkRow key={bookmark.id} bookmark={bookmark} rowNum={idx} />
-            ))}
-          <form>
-            <input
-              className="border-2 border-slate-500"
-              type="text"
-              name="title"
-              value={title}
-            />
-            <input
-              className="border-2 border-slate-500"
-              type="text"
-              name="url"
-              value={url}
-            />
-            <input type="submit" value="Create" onClick={handleSubmit} />
-          </form>
-        </section>
+        <div className="flex justify-between pt-32 min-h-screen">
+          <section className="flex flex-col w-1/3">
+            <h2 className="pb-4 text-3xl">Bookmarks</h2>
+            {bookmarks.data &&
+              bookmarks.data.map((bookmark, idx) => (
+                <BookmarkRow
+                  key={bookmark.id}
+                  bookmark={bookmark}
+                  rowNum={idx}
+                />
+              ))}
+          </section>
+          <section className="pr-64 w-1/3">
+            <form className="flex flex-col">
+              <label htmlFor="title">Title:</label>
+              <input
+                className="border-2 border-slate-500"
+                type="text"
+                name="title"
+                required
+                onChange={handleChange('title')}
+              />
+              <label htmlFor="url">URL:</label>
+              <input
+                className="border-2 border-slate-500"
+                type="text"
+                name="url"
+                required
+                onChange={handleChange('url')}
+              />
+              <input type="submit" value="Create" onClick={handleSubmit} />
+            </form>
+          </section>
+        </div>
       </main>
     </>
   );
@@ -118,11 +150,11 @@ const StarIcon: React.FC<StarIconProps> = ({ favorite }) => {
       width={size}
       height={size}
       viewBox={`0 0 ${size} ${size}`}
-      stroke-width="1"
+      strokeWidth="1"
       stroke="currentColor"
       fill={fill}
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     >
       <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
       <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"></path>
