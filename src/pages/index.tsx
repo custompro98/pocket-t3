@@ -9,34 +9,43 @@ type InputName = "title" | "url";
 const Home: NextPage = () => {
   const { data: sessionData } = useSession();
 
+  const bookmarks = trpc.bookmark.list.useQuery();
+
   const createBookmark = trpc.bookmark.create.useMutation();
 
-  const [title, setTitle] = useState<string | undefined>(undefined);
-  const [url, setUrl] = useState<string | undefined>(undefined);
+  const [title, setTitle] = useState('');
+  const [url, setUrl] = useState('');
 
-  const handleChange = (field: InputName): React.ChangeEventHandler<HTMLInputElement> => (e) => {
-    const set = field === 'title' ? setTitle : setUrl;
+  const handleChange =
+    (field: InputName): React.ChangeEventHandler<HTMLInputElement> =>
+    (e) => {
+      const set = field === "title" ? setTitle : setUrl;
 
-    set(e.currentTarget.value);
-  };
+      set(e.currentTarget.value);
+    };
 
   const handleSubmit: React.MouseEventHandler<HTMLInputElement> = (event) => {
     event.preventDefault();
 
-    if (title === undefined || url === undefined) {
+    if (!title || !url) {
       return;
     }
 
-    createBookmark.mutate({
-      title,
-      url,
-    });
+    createBookmark.mutate(
+      {
+        title,
+        url,
+      },
+      {
+        onSuccess: () => {
+          bookmarks.refetch();
+        },
+      }
+    );
 
-    setTitle(undefined);
-    setUrl(undefined);
+    setTitle('');
+    setUrl('');
   };
-
-  const bookmarks = trpc.bookmark.list.useQuery();
 
   return (
     <>
@@ -56,7 +65,7 @@ const Home: NextPage = () => {
             <h2 className="pb-4 text-3xl">Bookmarks</h2>
             {bookmarks.data &&
               bookmarks.data.map((bookmark, idx) => (
-                <BookmarkRow
+                <Bookmark
                   key={bookmark.id}
                   bookmark={bookmark}
                   rowNum={idx}
@@ -70,16 +79,20 @@ const Home: NextPage = () => {
                 className="border-2 border-slate-500"
                 type="text"
                 name="title"
+                value={title}
+                placeholder="Example Dot Com"
                 required
-                onChange={handleChange('title')}
+                onChange={handleChange("title")}
               />
               <label htmlFor="url">URL:</label>
               <input
                 className="border-2 border-slate-500"
                 type="text"
                 name="url"
+                value={url}
+                placeholder="https://example.com"
                 required
-                onChange={handleChange('url')}
+                onChange={handleChange("url")}
               />
               <input type="submit" value="Create" onClick={handleSubmit} />
             </form>
@@ -117,12 +130,12 @@ interface BookmarkCardProps {
   rowNum?: number;
 }
 
-const BookmarkRow: React.FC<BookmarkCardProps> = ({ bookmark, rowNum }) => {
-  const bg = rowNum && rowNum % 2 ? "bg-slate-100" : "";
+const Bookmark: React.FC<BookmarkCardProps> = ({ bookmark, rowNum }) => {
+  const bg = rowNum && rowNum % 2 ? "bg-violet-50" : "";
 
   return (
     <div
-      className={`flex flex-row justify-between border-2 border-slate-500 p-4 align-middle ${bg} -mt-2 max-w-md`}
+      className={`flex flex-row justify-between border-2 border-slate-500 p-4 align-middle ${bg} mt-1 max-w-md`}
     >
       <div className="flex flex-col">
         <span className="text-lg">{bookmark.title}</span>
