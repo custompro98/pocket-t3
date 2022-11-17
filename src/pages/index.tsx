@@ -13,8 +13,8 @@ const Home: NextPage = () => {
 
   const createBookmark = trpc.bookmark.create.useMutation();
 
-  const [title, setTitle] = useState('');
-  const [url, setUrl] = useState('');
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
 
   const handleChange =
     (field: InputName): React.ChangeEventHandler<HTMLInputElement> =>
@@ -43,8 +43,8 @@ const Home: NextPage = () => {
       }
     );
 
-    setTitle('');
-    setUrl('');
+    setTitle("");
+    setUrl("");
   };
 
   return (
@@ -61,16 +61,18 @@ const Home: NextPage = () => {
           </Button>
         </header>
         <div className="flex justify-between pt-32 min-h-screen">
-          <section className="flex flex-col w-1/3">
+          <section className="flex flex-col w-1/2">
             <h2 className="pb-4 text-3xl">Bookmarks</h2>
-            {bookmarks.data &&
-              bookmarks.data.map((bookmark, idx) => (
-                <Bookmark
-                  key={bookmark.id}
-                  bookmark={bookmark}
-                  rowNum={idx}
-                />
-              ))}
+            <div className="flex flex-wrap">
+              {bookmarks.data &&
+                bookmarks.data.map((bookmark, idx) => (
+                  <Bookmark
+                    key={bookmark.id}
+                    bookmark={bookmark}
+                    rowNum={idx}
+                  />
+                ))}
+            </div>
           </section>
           <section className="pr-64 w-1/3">
             <form className="flex flex-col">
@@ -125,17 +127,17 @@ const Button: React.FC<ButtonProps> = ({
   );
 };
 
-interface BookmarkCardProps {
+interface BookmarkProps {
   bookmark: AppRouterTypes["bookmark"]["create"]["output"];
   rowNum?: number;
 }
 
-const Bookmark: React.FC<BookmarkCardProps> = ({ bookmark, rowNum }) => {
+const Bookmark: React.FC<BookmarkProps> = ({ bookmark, rowNum }) => {
   const bg = rowNum && rowNum % 2 ? "bg-violet-50" : "";
 
   return (
     <div
-      className={`flex flex-row justify-between border-2 border-slate-500 p-4 align-middle ${bg} mt-1 max-w-md`}
+      className={`flex flex-row justify-between border-2 border-slate-500 p-4 align-middle ${bg} mt-1 w-1/3 min-w-64`}
     >
       <div className="flex flex-col">
         <span className="text-lg">{bookmark.title}</span>
