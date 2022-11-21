@@ -4,6 +4,12 @@ import { useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { type AppRouterTypes, trpc } from "../utils/trpc";
 
+type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
+  ? ElementType
+  : never;
+
+type Bookmark = ArrElement<AppRouterTypes["bookmark"]["list"]["output"]>;
+
 type InputName = "title" | "url";
 
 const Home: NextPage = () => {
@@ -12,6 +18,7 @@ const Home: NextPage = () => {
   const bookmarks = trpc.bookmark.list.useQuery();
 
   const createBookmark = trpc.bookmark.create.useMutation();
+  const updateBookmark = trpc.bookmark.update.useMutation();
 
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
@@ -47,6 +54,26 @@ const Home: NextPage = () => {
     setUrl("");
   };
 
+  const handleFavorite = (
+    bookmark: Bookmark
+  ): React.MouseEventHandler<SVGElement> => {
+    return (event) => {
+      event.preventDefault();
+
+      updateBookmark.mutate(
+        {
+          ...bookmark,
+          favorite: !bookmark.favorite,
+        },
+        {
+          onSuccess: () => {
+            bookmarks.refetch();
+          },
+        }
+      );
+    };
+  };
+
   return (
     <>
       <Head>
@@ -69,6 +96,7 @@ const Home: NextPage = () => {
                   <Bookmark
                     key={bookmark.id}
                     bookmark={bookmark}
+                    onFavorite={handleFavorite(bookmark)}
                     rowNum={idx}
                   />
                 ))}
@@ -128,16 +156,21 @@ const Button: React.FC<ButtonProps> = ({
 };
 
 interface BookmarkProps {
-  bookmark: AppRouterTypes["bookmark"]["create"]["output"];
+  bookmark: Bookmark;
   rowNum?: number;
+  onFavorite: React.MouseEventHandler<SVGElement>;
 }
 
-const Bookmark: React.FC<BookmarkProps> = ({ bookmark, rowNum }) => {
+const Bookmark: React.FC<BookmarkProps> = ({
+  bookmark,
+  rowNum,
+  onFavorite,
+}) => {
   const bg = rowNum && rowNum % 2 ? "bg-violet-50" : "";
 
   return (
     <div
-      className={`flex flex-row justify-between border-2 border-slate-500 p-4 align-middle ${bg} mt-1 w-1/3 min-w-64`}
+      className={`flex flex-row justify-between border-2 border-slate-500 p-4 align-middle ${bg} min-w-64 mt-1 w-1/3`}
     >
       <div className="flex flex-col">
         <span className="text-lg">{bookmark.title}</span>
@@ -146,18 +179,28 @@ const Bookmark: React.FC<BookmarkProps> = ({ bookmark, rowNum }) => {
         </span>
       </div>
       <div className="flex flex-col justify-center">
-        <StarIcon favorite={bookmark.favorite} />
+        <IconButton
+          handleClick={onFavorite}
+          Icon={StarIcon}
+          iconProps={{ fillColor: "gold", filled: bookmark.favorite }}
+        />
       </div>
     </div>
   );
 };
 
-interface StarIconProps {
-  favorite?: boolean;
+interface IconProps {
+  filled?: boolean;
+  fillColor?: string;
+  handleClick?: React.MouseEventHandler<SVGElement>;
 }
 
-const StarIcon: React.FC<StarIconProps> = ({ favorite }) => {
-  const fill = favorite ? "gold" : "none";
+const StarIcon: React.FC<IconProps> = ({
+  filled,
+  fillColor = "none",
+  handleClick: onClick,
+}) => {
+  const fill = filled ? fillColor : "none";
   const size = 24;
 
   return (
@@ -170,11 +213,26 @@ const StarIcon: React.FC<StarIconProps> = ({ favorite }) => {
       fill={fill}
       strokeLinecap="round"
       strokeLinejoin="round"
+      onClick={onClick}
     >
       <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
       <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"></path>
     </svg>
   );
+};
+
+interface IconButtonProps<T> {
+  handleClick: React.MouseEventHandler<SVGElement>;
+  Icon: React.FC<T>;
+  iconProps: T;
+}
+
+const IconButton: React.FC<IconButtonProps<IconProps>> = ({
+  handleClick,
+  Icon,
+  iconProps,
+}) => {
+  return <Icon {...iconProps} handleClick={handleClick} />;
 };
 
 export default Home;
