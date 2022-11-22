@@ -2,13 +2,10 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import { useState } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { type AppRouterTypes, trpc } from "../utils/trpc";
+import { AppRouterTypes, ArrElement, trpc } from "../utils/trpc";
+import Bookmark from "../components/bookmark";
 
-type ArrElement<ArrType> = ArrType extends readonly (infer ElementType)[]
-  ? ElementType
-  : never;
-
-type Bookmark = ArrElement<AppRouterTypes["bookmark"]["list"]["output"]>;
+type BookmarkType = ArrElement<AppRouterTypes["bookmark"]["list"]["output"]>;
 
 type InputName = "title" | "url";
 
@@ -55,7 +52,7 @@ const Home: NextPage = () => {
   };
 
   const handleFavorite = (
-    bookmark: Bookmark
+    bookmark: BookmarkType
   ): React.MouseEventHandler<SVGElement> => {
     return (event) => {
       event.preventDefault();
@@ -153,86 +150,6 @@ const Button: React.FC<ButtonProps> = ({
       {children}
     </button>
   );
-};
-
-interface BookmarkProps {
-  bookmark: Bookmark;
-  rowNum?: number;
-  onFavorite: React.MouseEventHandler<SVGElement>;
-}
-
-const Bookmark: React.FC<BookmarkProps> = ({
-  bookmark,
-  rowNum,
-  onFavorite,
-}) => {
-  const bg = rowNum && rowNum % 2 ? "bg-violet-50" : "";
-
-  return (
-    <div
-      className={`flex flex-row justify-between border-2 border-slate-500 p-4 align-middle ${bg} min-w-64 mt-1 w-1/3`}
-    >
-      <div className="flex flex-col">
-        <span className="text-lg">{bookmark.title}</span>
-        <span className="text-sm">
-          <em>{bookmark.url}</em>
-        </span>
-      </div>
-      <div className="flex flex-col justify-center">
-        <IconButton
-          handleClick={onFavorite}
-          Icon={StarIcon}
-          iconProps={{ fillColor: "gold", filled: bookmark.favorite }}
-        />
-      </div>
-    </div>
-  );
-};
-
-interface IconProps {
-  filled?: boolean;
-  fillColor?: string;
-  handleClick?: React.MouseEventHandler<SVGElement>;
-}
-
-const StarIcon: React.FC<IconProps> = ({
-  filled,
-  fillColor = "none",
-  handleClick: onClick,
-}) => {
-  const fill = filled ? fillColor : "none";
-  const size = 24;
-
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      strokeWidth="1"
-      stroke="currentColor"
-      fill={fill}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      onClick={onClick}
-    >
-      <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-      <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"></path>
-    </svg>
-  );
-};
-
-interface IconButtonProps<T> {
-  handleClick: React.MouseEventHandler<SVGElement>;
-  Icon: React.FC<T>;
-  iconProps: T;
-}
-
-const IconButton: React.FC<IconButtonProps<IconProps>> = ({
-  handleClick,
-  Icon,
-  iconProps,
-}) => {
-  return <Icon {...iconProps} handleClick={handleClick} />;
 };
 
 export default Home;
